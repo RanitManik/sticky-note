@@ -3,11 +3,11 @@ import pg from "pg";
 const { Pool } = pg;
 
 const pool = new Pool({
-  user: "postgres",
-  password: "123",
-  host: "localhost",
-  port: 5432,
-  database: "perntodo",
+    user: "postgres",
+    password: "123",
+    host: "localhost",
+    port: 5432,
+    database: "perntodo",
 });
 
 export default pool;
