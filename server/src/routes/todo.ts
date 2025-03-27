@@ -4,7 +4,7 @@ import pool from "@/db";
 const router = express.Router();
 
 // create todos
-router.post("/todos", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
     try {
         const { description } = req.body;
 
@@ -20,7 +20,7 @@ router.post("/todos", async (req: Request, res: Response) => {
 });
 
 // get all todos
-router.get("/todos", async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
     try {
         const allTodos = await pool.query("SELECT * FROM todo");
         res.json(allTodos.rows);
@@ -30,7 +30,7 @@ router.get("/todos", async (req: Request, res: Response) => {
 });
 
 // get a todo
-router.get("/todos/:id", async (req: Request, res: Response) => {
+router.get("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const todo = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
@@ -43,7 +43,7 @@ router.get("/todos/:id", async (req: Request, res: Response) => {
 });
 
 // update a todo
-router.put("/todos/:id", async (req: Request, res: Response) => {
+router.put("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { description } = req.body;
@@ -60,7 +60,7 @@ router.put("/todos/:id", async (req: Request, res: Response) => {
 });
 
 // delete a todo
-router.delete("/todos/:id", async (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
