@@ -6,8 +6,8 @@
         "install:server": "cd server && npm install",
         "dev:client": "cd client && npm run dev",
         "dev:server": "cd server && npm run dev",
-        "format:client": "cd client && prettier --write .",
-        "format:server": "cd server && prettier --write .",
+        "format:client": "cd client && npm run format",
+        "format:server": "cd server && npm run format",
         "clean": "rm -rf node_modules client/node_modules server/node_modules && npm cache clean --force"
     }
 }
