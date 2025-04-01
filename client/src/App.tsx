@@ -1,13 +1,19 @@
-import Header from "@/components/Header.tsx";
-import Background from "@/components/Background.tsx";
-import StickyBoard from "@/components/StickyBoard.tsx";
+import React from "react";
+import Header from "@/components/Header";
+import StickyBoard from "@/components/StickyBoard";
 
-export default function Page() {
+function App() {
+    const [isCreating, setIsCreating] = React.useState(false);
+
     return (
         <main className="flex min-h-screen flex-col space-y-6 bg-gray-950 p-4 text-white md:px-16 md:py-10">
             <Header />
-            <Background />
-            <StickyBoard />
+            <StickyBoard
+                isCreating={isCreating}
+                setIsCreating={setIsCreating}
+            />
         </main>
     );
 }
+
+export default App;
