@@ -15,7 +15,7 @@ router.post("/", async (req: Request, res: Response) => {
 
         res.json(newTodo.rows);
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 });
 
@@ -25,7 +25,7 @@ router.get("/", async (req: Request, res: Response) => {
         const allTodos = await pool.query("SELECT * FROM todo");
         res.json(allTodos.rows);
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 });
 
@@ -33,12 +33,10 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const todo = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
-            id,
-        ]);
+        const todo = await pool.query("SELECT * FROM todo WHERE id = $1", [id]);
         res.json(todo.rows);
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 });
 
@@ -49,13 +47,13 @@ router.put("/:id", async (req: Request, res: Response) => {
         const { description } = req.body;
 
         const updatedTodo = await pool.query(
-            "UPDATE todo SET description = $1 WHERE  todo_id = $2 RETURNING *",
+            "UPDATE todo SET description = $1 WHERE  id = $2 RETURNING *",
             [description, id],
         );
 
         res.json(updatedTodo.rows);
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 });
 
@@ -64,14 +62,13 @@ router.delete("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const deleteTodo = await pool.query(
-            "DELETE FROM todo WHERE todo_id = $1",
-            [id],
-        );
+        const deleteTodo = await pool.query("DELETE FROM todo WHERE id = $1", [
+            id,
+        ]);
 
         res.json("TODO was deleted");
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 });
 

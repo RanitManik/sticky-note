@@ -6,6 +6,14 @@ import todoRoutes from "@/routes/todo";
 const app = express();
 
 // middlewares
+app.use(
+    cors({
+        origin: process.env.FRONTEND_URL, // Allow frontend to access
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        allowedHeaders: ["Content-Type"],
+    }),
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
