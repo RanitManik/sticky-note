@@ -15,12 +15,11 @@ The **Sticky Note** app is a modern, minimalistic, and user-friendly task manage
 
 
 ## 🛠️ Tech Stack
-- **Frontend:** React.js, TypeScript, Vite
+- **Frontend:** React.js, TypeScript, Vite, TailwindCSS, Framer Motion, Lucide-React
 - **Backend:** Node.js, Express.js, PostgreSQL
 - **Database Hosting:** Render
 - **Deployment:** Vercel (Frontend), Render (Backend)
 - **Authentication:** FingerprintJS
-
 
 
 ## 🚀 Getting Started
