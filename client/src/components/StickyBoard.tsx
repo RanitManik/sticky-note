@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { getNotes, deleteNote, createNote, updateNote } from "@/api";
-import Background from "./Background";
+import Background from "@/components/Background";
+import Modal from "@/components/Modal";
+import DeleteZone from "@/components/DeleteZone";
+import { useOptimistic } from "react";
 
 interface Note {
     id: number;
@@ -13,138 +15,142 @@ const StickyBoard: React.FC<{
     isCreating: boolean;
     setIsCreating: (value: boolean) => void;
 }> = ({ isCreating, setIsCreating }) => {
-    const ref = useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement | null>(null);
     const [notes, setNotes] = useState<Note[]>([]);
     const [showDeleteZone, setShowDeleteZone] = useState(false);
     const [newNoteText, setNewNoteText] = useState("");
+    const [editingNote, setEditingNote] = useState<Note | null>(null);
+
+    const [optimisticNotes, addOptimisticNote] = useOptimistic<Note[], Note>(
+        notes,
+        (state, newNote) => [...state, newNote],
+    );
 
     useEffect(() => {
-        const fetchNotes = async () => {
-            const data = await getNotes();
-            setNotes(data);
-        };
         fetchNotes();
     }, []);
 
+    const fetchNotes = async () => {
+        const data = await getNotes();
+        setNotes(data);
+    };
+
     const handleDelete = async (id: number) => {
         try {
+            const optimisticNotesList = notes.filter((note) => note.id !== id);
+            setNotes(optimisticNotesList);
             await deleteNote(id);
-            setNotes(notes.filter((note) => note.id !== id));
+            await fetchNotes();
         } catch (error) {
             console.error("Failed to delete note:", error);
+            await fetchNotes();
         }
     };
 
     const handleCreate = async () => {
         if (!newNoteText.trim()) return;
         try {
-            const newNote = await createNote(newNoteText);
-            setNotes([...notes, newNote]);
+            const optimisticNote = { id: Date.now(), description: newNoteText };
+            addOptimisticNote(optimisticNote);
+            await createNote(newNoteText);
+            await fetchNotes();
             setNewNoteText("");
             setIsCreating(false);
         } catch (error) {
             console.error("Failed to create note:", error);
+            await fetchNotes();
         }
     };
 
-    const handleUpdate = async (id: number, description: string) => {
+    const handleUpdate = async (id: number) => {
+        const note = notes.find((n) => n.id === id);
+        if (note) {
+            setEditingNote(note);
+        }
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingNote) return;
         try {
-            await updateNote(id, description);
-            setNotes(
-                notes.map((note) =>
-                    note.id === id ? { ...note, description } : note,
-                ),
+            const optimisticNotesList = notes.map((note) =>
+                note.id === editingNote.id ? editingNote : note,
             );
+            setNotes(optimisticNotesList);
+            await updateNote(editingNote.id, editingNote.description);
+            await fetchNotes();
+            setEditingNote(null);
         } catch (error) {
             console.error("Failed to update note:", error);
+            await fetchNotes();
         }
     };
 
     const handleNoteDrop = async (noteId: number, boxId: number) => {
-        // Update the note's ID to match the new box
         const noteToUpdate = notes.find((note) => note.id === noteId);
         if (!noteToUpdate) return;
 
-        // Calculate the new ID to ensure it belongs to the target box
         const currentBox = noteId % 4;
         const idDifference = boxId - currentBox;
         const newId = noteId + idDifference;
 
         try {
-            // Update the note with the new ID
-            await updateNote(noteId, noteToUpdate.description);
-            setNotes(
-                notes.map((note) =>
-                    note.id === noteId ? { ...note, id: newId } : note,
-                ),
+            const optimisticNotesList = notes.map((note) =>
+                note.id === noteId ? { ...note, id: newId } : note,
             );
+            setNotes(optimisticNotesList);
+            await updateNote(noteId, noteToUpdate.description);
+            await fetchNotes();
         } catch (error) {
             console.error("Failed to update note position:", error);
+            await fetchNotes();
         }
     };
 
     return (
-        <div ref={ref} className="relative flex-grow">
-            <Background
-                onCreateClick={() => setIsCreating(true)}
-                notes={notes}
-                reference={ref}
-                onDragStart={() => setShowDeleteZone(true)}
-                onDragEnd={(info, id) => {
-                    setShowDeleteZone(false);
-                    if (info.point.y > window.innerHeight - 100) {
-                        handleDelete(id);
+        <div ref={ref} className="relative h-full w-full">
+            <AnimatePresence>
+                <Background
+                    onCreateClick={() => setIsCreating(true)}
+                    notes={optimisticNotes}
+                    reference={ref}
+                    onDragStart={() => setShowDeleteZone(true)}
+                    onDragEnd={(info, id) => {
+                        setShowDeleteZone(false);
+                        if (info.point.y > window.innerHeight - 100) {
+                            handleDelete(id);
+                        }
+                    }}
+                    onUpdate={handleUpdate}
+                    onNoteDrop={handleNoteDrop}
+                />
+
+                <DeleteZone show={showDeleteZone} />
+
+                <Modal
+                    title="Create Note"
+                    isOpen={isCreating}
+                    onClose={() => setIsCreating(false)}
+                    onSave={handleCreate}
+                    value={newNoteText}
+                    onChange={setNewNoteText}
+                    saveText="Create"
+                />
+
+                <Modal
+                    title="Edit Note"
+                    isOpen={!!editingNote}
+                    onClose={() => setEditingNote(null)}
+                    onSave={handleSaveEdit}
+                    value={editingNote?.description || ""}
+                    onChange={(value) =>
+                        setEditingNote(
+                            editingNote
+                                ? { ...editingNote, description: value }
+                                : null,
+                        )
                     }
-                }}
-                onUpdate={handleUpdate}
-                onNoteDrop={handleNoteDrop}
-            />
-
-            <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{
-                    y: showDeleteZone ? 0 : 100,
-                    opacity: showDeleteZone ? 1 : 0,
-                }}
-                className="fixed bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-red-500 px-6 py-4 backdrop-blur-sm"
-            >
-                <Trash2 className="h-6 w-6" />
-                <span className="font-medium text-white">
-                    Drop here to delete
-                </span>
-            </motion.div>
-
-            {isCreating && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="w-full max-w-md rounded-lg bg-[#fdb81e] p-6 shadow-xl"
-                    >
-                        <textarea
-                            autoFocus
-                            value={newNoteText}
-                            onChange={(e) => setNewNoteText(e.target.value)}
-                            placeholder="Write your note..."
-                            className="h-32 w-full resize-none rounded bg-white/90 p-3 text-black focus:outline-none"
-                        />
-                        <div className="mt-4 flex justify-end gap-2">
-                            <button
-                                onClick={() => setIsCreating(false)}
-                                className="rounded bg-gray-200 px-4 py-2 text-black transition-colors hover:bg-gray-300"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreate}
-                                className="rounded bg-black px-4 py-2 text-white transition-colors hover:bg-gray-900"
-                            >
-                                Create
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+                />
+            </AnimatePresence>
         </div>
     );
 };

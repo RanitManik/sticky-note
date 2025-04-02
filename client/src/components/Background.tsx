@@ -1,4 +1,4 @@
-import Box from "@/components/Box.tsx";
+import Box from "@/components/Box";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import React from "react";
@@ -6,7 +6,7 @@ import React from "react";
 interface BackgroundProps {
     onCreateClick: () => void;
     notes: Array<{ id: number; description: string }>;
-    reference: React.RefObject<null>;
+    reference: React.RefObject<HTMLDivElement | null>;
     onDragStart: () => void;
     onDragEnd: (info: any, id: number) => void;
     onUpdate: (id: number, description: string) => void;
@@ -22,14 +22,14 @@ const Background = ({
     onUpdate,
     onNoteDrop,
 }: BackgroundProps) => {
-    // Distribute notes into 4 boxes based on modulo of their IDs
+    // Distribute notes into 4 boxes
     const boxNotes = Array.from({ length: 4 }, (_, boxIndex) =>
         notes.filter((note) => note.id % 4 === boxIndex),
     );
 
     return (
         <>
-            <div className="relative grid flex-grow gap-3 md:grid-cols-2 md:grid-rows-2">
+            <div className="relative grid h-full w-full flex-grow grid-cols-2 grid-rows-2 gap-4">
                 {boxNotes.map((notes, index) => (
                     <Box
                         key={index}

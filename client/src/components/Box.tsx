@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import StickyNote from "./StickyNote";
 
 interface BoxProps {
     id: number;
@@ -7,7 +7,7 @@ interface BoxProps {
     onDragStart: () => void;
     onDragEnd: (info: any, id: number) => void;
     onUpdate: (id: number, description: string) => void;
-    reference: React.RefObject<null>;
+    reference: React.RefObject<HTMLDivElement | null>;
     onNoteDrop: (noteId: number, boxId: number) => void;
 }
 
@@ -17,14 +17,37 @@ const Box = ({
     reference,
     onDragStart,
     onDragEnd,
+    onUpdate,
     onNoteDrop,
 }: BoxProps) => {
+    const [positions, setPositions] = useState<{
+        [key: number]: { x: number; y: number };
+    }>({});
+
     const colors = {
         0: "#fff740", // Yellow
         1: "#ff7eb9", // Pink
         2: "#7afcff", // Blue
         3: "#98ff98", // Green
     };
+
+    useEffect(() => {
+        const newPositions: { [key: number]: { x: number; y: number } } = {};
+        notes.forEach((note) => {
+            if (!positions[note.id]) {
+                const boxWidth = 300; // Approximate box width
+                const boxHeight = 300; // Approximate box height
+                const noteWidth = 200; // Note width
+                const noteHeight = 150; // Note height
+
+                const x = Math.random() * (boxWidth - noteWidth);
+                const y = Math.random() * (boxHeight - noteHeight);
+
+                newPositions[note.id] = { x, y };
+            }
+        });
+        setPositions((prev) => ({ ...prev, ...newPositions }));
+    }, [notes]);
 
     const handleDragEnd = (event: any, info: any, noteId: number) => {
         const element = event.target;
@@ -46,41 +69,25 @@ const Box = ({
             }
         });
 
-        // If not dropped in any box, check if it should be deleted
         if (info.point.y > window.innerHeight - 100) {
             onDragEnd(info, noteId);
         }
     };
 
     return (
-        <div className="note-box relative flex h-[300px] overflow-visible border-2 border-dashed border-gray-500 p-4">
+        <div className="note-box relative flex  overflow-visible border-2 border-dashed border-gray-500 p-4">
             {notes.map((note) => (
-                <motion.div
+                <StickyNote
                     key={note.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    dragConstraints={reference}
-                    drag
+                    id={note.id}
+                    description={note.description}
+                    color={colors[id as keyof typeof colors]}
+                    position={positions[note.id] || { x: 0, y: 0 }}
+                    reference={reference}
                     onDragStart={onDragStart}
-                    onDragEnd={(event, info) =>
-                        handleDragEnd(event, info, note.id)
-                    }
-                    whileDrag={{
-                        cursor: "grabbing",
-                        scale: 1.2,
-                        zIndex: 50,
-                    }}
-                    className="absolute w-[150px] cursor-grab space-y-3 px-3 py-6 text-black shadow-sm select-none"
-                    style={{
-                        backgroundColor: colors[id as keyof typeof colors],
-                    }}
-                >
-                    <p className="font-winky line-clamp-4 text-xl tracking-tighter">
-                        {note.description}
-                    </p>
-                </motion.div>
+                    onDragEnd={handleDragEnd}
+                    onUpdate={onUpdate}
+                />
             ))}
         </div>
     );
