@@ -11,6 +11,7 @@
         "format": "prettier --write ."
     },
     "dependencies": {
+        "@fingerprintjs/fingerprintjs": "^4.6.1",
         "@tailwindcss/vite": "^4.0.17",
         "framer-motion": "^12.6.2",
         "lucide-react": "^0.486.0",

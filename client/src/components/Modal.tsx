@@ -39,7 +39,7 @@ const Modal = ({
                     <h2 className="text-xl font-bold text-black">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="text-black hover:text-gray-700"
+                        className="cursor-pointer text-black hover:text-gray-700"
                     >
                         <X className="h-6 w-6" />
                     </button>
@@ -54,13 +54,13 @@ const Modal = ({
                 <div className="mt-4 flex justify-end gap-2">
                     <button
                         onClick={onClose}
-                        className="rounded bg-gray-200 px-4 py-2 text-black transition-colors hover:bg-gray-300"
+                        className="cursor-pointer rounded bg-gray-200 px-4 py-2 text-black transition-colors hover:bg-gray-300"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={onSave}
-                        className="rounded bg-black px-4 py-2 text-white transition-colors hover:bg-gray-900"
+                        className="cursor-pointer rounded bg-black px-4 py-2 text-white transition-colors hover:bg-gray-900"
                     >
                         {saveText}
                     </button>

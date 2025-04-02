@@ -14,6 +14,7 @@ interface StickyNoteProps {
         id: number,
     ) => void;
     onUpdate: (id: number, description: string) => void;
+    isBeingDeleted?: boolean;
 }
 
 const StickyNote = ({
@@ -25,6 +26,7 @@ const StickyNote = ({
     onDragStart,
     onDragEnd,
     onUpdate,
+    isBeingDeleted,
 }: StickyNoteProps) => {
     return (
         <motion.div
@@ -37,10 +39,11 @@ const StickyNote = ({
                 y: position.y,
             }}
             animate={{
-                opacity: 1,
-                scale: 1,
+                opacity: isBeingDeleted ? 0 : 1,
+                scale: isBeingDeleted ? 0 : 1,
                 x: position.x,
-                y: position.y,
+                y: isBeingDeleted ? window.innerHeight : position.y,
+                rotate: isBeingDeleted ? 20 : 0,
             }}
             exit={{ opacity: 0, scale: 0.8 }}
             dragConstraints={reference}
@@ -49,14 +52,15 @@ const StickyNote = ({
             onDragEnd={(event, info) => onDragEnd(event, info, id)}
             whileDrag={{
                 cursor: "grabbing",
-                scale: 1.2,
+                scale: 1.1,
                 zIndex: 50,
             }}
             onDoubleClick={() => onUpdate(id, description)}
-            className="absolute h-[150px] w-[200px] cursor-grab space-y-3 px-3 py-6 text-black shadow-xl select-none"
+            className="absolute h-[150px] w-[200px] cursor-grab space-y-3 px-3 py-6 text-black drop-shadow-sm select-none"
             style={{ backgroundColor: color }}
+            transition={{ duration: 0.3 }}
         >
-            <p className="font-winky line-clamp-4 text-xl tracking-tighter">
+            <p className="line-clamp-4 text-xl leading-tight font-semibold tracking-tighter">
                 {description}
             </p>
         </motion.div>

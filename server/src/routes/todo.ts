@@ -3,72 +3,135 @@ import pool from "@/db";
 
 const router = express.Router();
 
-// create todos
+/**
+ * @route   POST /todos
+ * @desc    Create a new todo
+ * @access  Public (uses fingerprint ID for identification)
+ */
 router.post("/", async (req: Request, res: Response) => {
     try {
-        const { description } = req.body;
+        const { description, fingerprintId } = req.body;
+        if (!fingerprintId || !description) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
 
         const newTodo = await pool.query(
-            "INSERT INTO todo (description) VALUES($1) RETURNING *",
-            [description],
+            "INSERT INTO todo (description, fingerprintId) VALUES ($1, $2) RETURNING *",
+            [description, fingerprintId],
         );
 
-        res.json(newTodo.rows);
+        return res.status(201).json(newTodo.rows[0]);
     } catch (e) {
         console.error(e);
+        return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// get all todos
-router.get("/", async (req: Request, res: Response) => {
+/**
+ * @route   GET /todos/:fingerprintId
+ * @desc    Get all todos for a specific user
+ * @access  Public (based on fingerprint ID)
+ */
+router.get("/:fingerprintId", async (req: Request, res: Response) => {
     try {
-        const allTodos = await pool.query("SELECT * FROM todo");
-        res.json(allTodos.rows);
+        const { fingerprintId } = req.params;
+        const userTodos = await pool.query(
+            "SELECT * FROM todo WHERE fingerprintId = $1",
+            [fingerprintId],
+        );
+
+        return res.status(200).json(userTodos.rows);
     } catch (e) {
         console.error(e);
+        return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// get a todo
-router.get("/:id", async (req: Request, res: Response) => {
+/**
+ * @route   GET /todos/:fingerprintId/:id
+ * @desc    Get a single todo by ID (for a specific user)
+ * @access  Public (based on fingerprint ID)
+ */
+router.get("/:fingerprintId/:id", async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const todo = await pool.query("SELECT * FROM todo WHERE id = $1", [id]);
-        res.json(todo.rows);
+        const { fingerprintId, id } = req.params;
+        const todo = await pool.query(
+            "SELECT * FROM todo WHERE id = $1 AND fingerprintId = $2",
+            [id, fingerprintId],
+        );
+
+        if (todo.rows.length === 0) {
+            return res.status(404).json({ error: "Todo not found" });
+        }
+
+        return res.status(200).json(todo.rows[0]);
     } catch (e) {
         console.error(e);
+        return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// update a todo
+/**
+ * @route   PUT /todos/:id
+ * @desc    Update a todo by ID
+ * @access  Public (user must own the todo)
+ */
 router.put("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { description } = req.body;
+        const { description, fingerprintId } = req.body;
+
+        if (!description || !fingerprintId) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
 
         const updatedTodo = await pool.query(
-            "UPDATE todo SET description = $1 WHERE  id = $2 RETURNING *",
-            [description, id],
+            "UPDATE todo SET description = $1 WHERE id = $2 AND fingerprintId = $3 RETURNING *",
+            [description, id, fingerprintId],
         );
 
-        res.json(updatedTodo.rows);
+        if (updatedTodo.rows.length === 0) {
+            return res
+                .status(404)
+                .json({ error: "Todo not found or not authorized" });
+        }
+
+        return res.status(200).json(updatedTodo.rows[0]);
     } catch (e) {
         console.error(e);
+        return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// delete a todo
+/**
+ * @route   DELETE /todos/:id
+ * @desc    Delete a todo by ID
+ * @access  Public (user must own the todo)
+ */
 router.delete("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const { fingerprintId } = req.body;
 
-        const deleteTodo = await pool.query("DELETE FROM todo WHERE id = $1", [
-            id,
-        ]);
+        if (!fingerprintId) {
+            return res.status(400).json({ error: "Missing fingerprint ID" });
+        }
 
-        res.json("TODO was deleted");
+        const deleteTodo = await pool.query(
+            "DELETE FROM todo WHERE id = $1 AND fingerprintId = $2 RETURNING *",
+            [id, fingerprintId],
+        );
+
+        if (deleteTodo.rows.length === 0) {
+            return res
+                .status(404)
+                .json({ error: "Todo not found or not authorized" });
+        }
+
+        return res.status(200).json({ message: "Todo was deleted" });
     } catch (e) {
         console.error(e);
+        return res.status(500).json({ error: "Internal server error" });
     }
 });
 

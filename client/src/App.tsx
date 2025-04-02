@@ -5,7 +5,7 @@ function App() {
     const [isCreating, setIsCreating] = React.useState(false);
 
     return (
-        <main className="flex h-[100svh] overflow-hidden bg-gray-950 p-2 md:p-4">
+        <main className="flex h-[100svh] overflow-hidden bg-white p-2 md:p-4">
             <StickyBoard
                 isCreating={isCreating}
                 setIsCreating={setIsCreating}

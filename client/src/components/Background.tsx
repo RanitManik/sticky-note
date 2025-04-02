@@ -11,6 +11,8 @@ interface BackgroundProps {
     onDragEnd: (info: any, id: number) => void;
     onUpdate: (id: number, description: string) => void;
     onNoteDrop: (noteId: number, boxId: number) => void;
+    deletingNoteId?: number | null;
+    onDeleteZoneOverlap: (isOverlapping: boolean) => void;
 }
 
 const Background = ({
@@ -21,6 +23,8 @@ const Background = ({
     onDragEnd,
     onUpdate,
     onNoteDrop,
+    deletingNoteId,
+    onDeleteZoneOverlap,
 }: BackgroundProps) => {
     // Distribute notes into 4 boxes
     const boxNotes = Array.from({ length: 4 }, (_, boxIndex) =>
@@ -40,6 +44,8 @@ const Background = ({
                         onDragEnd={onDragEnd}
                         onUpdate={onUpdate}
                         onNoteDrop={onNoteDrop}
+                        deletingNoteId={deletingNoteId}
+                        onDeleteZoneOverlap={onDeleteZoneOverlap}
                     />
                 ))}
 
@@ -47,9 +53,9 @@ const Background = ({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={onCreateClick}
-                    className="group absolute inset-1/2 z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-dashed border-gray-500 bg-gray-950 transition-colors hover:border-[#fdb81e] hover:bg-[#fdb81e]"
+                    className="group absolute inset-1/2 z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[#fdb81e] transition-colors hover:border-[#fdb81e] hover:bg-[#fdb81e]"
                 >
-                    <Plus className="h-6 w-6 text-gray-500 transition-colors group-hover:text-black" />
+                    <Plus className="h-6 w-6 text-black transition-colors group-hover:text-black" />
                 </motion.button>
             </div>
         </>
