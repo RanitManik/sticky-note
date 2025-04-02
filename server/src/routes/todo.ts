@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import pool from "@/db";
+import pool from "../db.js";
 
 const router = express.Router();
 
@@ -22,7 +22,6 @@ router.post("/", async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 });
-
 
 // @ts-ignore
 router.get("/:fingerprintId", async (req: Request, res: Response) => {
