@@ -3,11 +3,7 @@ import pool from "@/db";
 
 const router = express.Router();
 
-/**
- * @route   POST /todos
- * @desc    Create a new todo
- * @access  Public (uses fingerprint ID for identification)
- */
+// @ts-ignore
 router.post("/", async (req: Request, res: Response) => {
     try {
         const { description, fingerprintId } = req.body;
@@ -27,11 +23,8 @@ router.post("/", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @route   GET /todos/:fingerprintId
- * @desc    Get all todos for a specific user
- * @access  Public (based on fingerprint ID)
- */
+
+// @ts-ignore
 router.get("/:fingerprintId", async (req: Request, res: Response) => {
     try {
         const { fingerprintId } = req.params;
@@ -47,11 +40,7 @@ router.get("/:fingerprintId", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @route   GET /todos/:fingerprintId/:id
- * @desc    Get a single todo by ID (for a specific user)
- * @access  Public (based on fingerprint ID)
- */
+// @ts-ignore
 router.get("/:fingerprintId/:id", async (req: Request, res: Response) => {
     try {
         const { fingerprintId, id } = req.params;
@@ -71,11 +60,7 @@ router.get("/:fingerprintId/:id", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @route   PUT /todos/:id
- * @desc    Update a todo by ID
- * @access  Public (user must own the todo)
- */
+// @ts-ignore
 router.put("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -103,11 +88,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @route   DELETE /todos/:id
- * @desc    Delete a todo by ID
- * @access  Public (user must own the todo)
- */
+// @ts-ignore
 router.delete("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
