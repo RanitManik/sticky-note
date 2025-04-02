@@ -75,7 +75,7 @@ const Box = ({
     };
 
     return (
-        <div className="note-box relative flex  overflow-visible border-2 border-dashed border-gray-500 p-4">
+        <div className="note-box relative flex overflow-visible border-2 border-dashed border-gray-500 p-4">
             {notes.map((note) => (
                 <StickyNote
                     key={note.id}

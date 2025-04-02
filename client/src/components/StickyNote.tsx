@@ -56,7 +56,7 @@ const StickyNote = ({
             className="absolute h-[150px] w-[200px] cursor-grab space-y-3 px-3 py-6 text-black shadow-xl select-none"
             style={{ backgroundColor: color }}
         >
-            <p className="line-clamp-4 text-xl tracking-tighter font-winky">
+            <p className="font-winky line-clamp-4 text-xl tracking-tighter">
                 {description}
             </p>
         </motion.div>
