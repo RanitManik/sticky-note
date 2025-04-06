@@ -45,7 +45,7 @@ const StickyNote = ({
                     y: note.position.y + info.offset.y,
                 });
             }}
-            className="absolute flex h-[200px] w-[200px] cursor-grab flex-col overflow-hidden rounded-lg shadow-lg transition-shadow hover:shadow-2xl"
+            className="absolute flex h-[200px] w-[200px] cursor-grab flex-col overflow-hidden rounded-lg shadow-md transition-shadow hover:shadow-lg"
             style={{ backgroundColor: note.color }}
         >
             <div className="relative flex-1 p-4 before:pointer-events-none before:absolute before:inset-4 before:bg-[linear-gradient(transparent_calc(1.5rem-1px),#00000030_calc(1.5rem),transparent_calc(1.5rem+1px))] before:bg-[size:100%_1.5rem] before:content-['']">
