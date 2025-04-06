@@ -49,7 +49,7 @@ const StickyNote = ({
             style={{ backgroundColor: note.color }}
         >
             <div className="relative flex-1 p-4 before:pointer-events-none before:absolute before:inset-4 before:bg-[linear-gradient(transparent_calc(1.5rem-1px),#00000030_calc(1.5rem),transparent_calc(1.5rem+1px))] before:bg-[size:100%_1.5rem] before:content-['']">
-                <div className="absolute top-0 left-0 h-full w-[3px] bg-[#0000001a]" />
+                <div className="absolute top-0 left-0 h-full w-[3px] bg-black/10" />
                 <p className="font-caveat relative line-clamp-5 text-lg leading-6 break-all">
                     {note.description}
                 </p>

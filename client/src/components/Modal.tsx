@@ -48,7 +48,7 @@ const Modal = ({
                 </div>
 
                 <div className="relative p-6">
-                    <div className="absolute top-0 left-0 h-full w-[3px] bg-black/10" />
+                    <div className="absolute top-0 left-0 h-full w-[3px] bg-black/20" />
                     <textarea
                         autoFocus
                         value={value}
