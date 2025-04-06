@@ -26,7 +26,7 @@ The **Sticky Note** app is a modern, minimalistic, and user-friendly task manage
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/yourusername/sticky-note.git
+git clone https://github.com/RanitManik/sticky-note.git
 cd sticky-note
 ```
 
@@ -77,14 +77,14 @@ npm install
 #### 📌 Configure Environment Variables
 Create a `.env` file in the `client` directory and add:
 ```env
-VITE_BACKEND_API_URL=http://localhost:4000/api/notes
+VITE_BACKEND_API_URL=http://localhost:4000
 ```
 
 #### 📌 Start the Frontend
 ```sh
 npm run dev
 ```
-The app will be available at `http://localhost:5173/`
+The app will be available at `http://localhost:5173`
 
 
 
@@ -108,7 +108,7 @@ The app will be available at `http://localhost:5173/`
 2. Create a **Vercel Project**.
 3. Set Environment Variable:
    ```sh
-   VITE_BACKEND_API_URL=https://your-backend-url.onrender.com/api/notes
+   VITE_BACKEND_API_URL=https://your-backend-url
    ```
 4. Deploy!
 
