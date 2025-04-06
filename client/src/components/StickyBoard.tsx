@@ -1,189 +1,249 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { getNotes, deleteNote, createNote, updateNote } from "@/api";
-import Background from "@/components/Background";
 import Modal from "@/components/Modal";
-import DeleteZone from "@/components/DeleteZone";
-import { useOptimistic } from "react";
+import StickyNote from "@/components/StickyNote";
+import { Plus } from "lucide-react";
+import Loader from "@/components/Loader";
 
 interface Note {
     id: number;
     description: string;
+    position: { x: number; y: number };
+    color: string;
 }
 
-const StickyBoard: React.FC<{
-    isCreating: boolean;
-    setIsCreating: (value: boolean) => void;
-}> = ({ isCreating, setIsCreating }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
-    const [notes, setNotes] = useState<Note[]>([]);
-    const [showDeleteZone, setShowDeleteZone] = useState(false);
-    const [isOverlappingDeleteZone, setIsOverlappingDeleteZone] =
-        useState(false);
-    const [newNoteText, setNewNoteText] = useState("");
-    const [editingNote, setEditingNote] = useState<Note | null>(null);
-    const [deletingNoteId, setDeletingNoteId] = useState<number | null>(null);
-    const isDragging = useRef(false);
+const COLORS = [
+    "#fff740",
+    "#ff7eb9",
+    "#7afcff",
+    "#98ff98",
+    "#ffd700",
+    "#ff9999",
+];
+const NOTE_WIDTH = 200;
+const NOTE_HEIGHT = 200;
+const GRID_GAP = 20;
 
-    const [optimisticNotes, addOptimisticNote] = useOptimistic<Note[], Note>(
-        notes,
-        (state, newNote) => [...state, newNote],
+const calculatePosition = (index: number, containerWidth: number) => {
+    const notesPerRow = Math.floor(
+        (containerWidth - GRID_GAP) / (NOTE_WIDTH + GRID_GAP),
     );
+    const row = Math.floor(index / notesPerRow);
+    const col = index % notesPerRow;
+
+    return {
+        x: col * (NOTE_WIDTH + GRID_GAP) + GRID_GAP,
+        y: row * (NOTE_HEIGHT + GRID_GAP) + GRID_GAP,
+    };
+};
+
+const StickyBoard = () => {
+    const [notes, setNotes] = useState<Note[]>([]);
+    const [isCreating, setIsCreating] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [activeNote, setActiveNote] = useState<Note | null>(null);
+    const [newNoteText, setNewNoteText] = useState("");
+    const [actionType, setActionType] = useState<"create" | "edit" | null>(
+        null,
+    );
+    const [containerWidth, setContainerWidth] = useState(window.innerWidth);
+    const [isDragging, setIsDragging] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setContainerWidth(window.innerWidth);
+        };
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     useEffect(() => {
         fetchNotes();
     }, []);
 
+    useEffect(() => {
+        if (!isDragging) {
+            // Only recalculate positions when not dragging
+            const updatedNotes = notes.map((note, index) => ({
+                ...note,
+                position: calculatePosition(index, containerWidth),
+            }));
+            setNotes(updatedNotes);
+        }
+    }, [containerWidth, isDragging]);
+
     const fetchNotes = async () => {
-        const data = await getNotes();
-        setNotes(data);
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!isDragging.current) return;
-
+        setIsLoading(true);
         try {
-            setDeletingNoteId(id);
-            const optimisticNotesList = notes.filter((note) => note.id !== id);
-
-            // Wait for delete animation
-            setTimeout(async () => {
-                setNotes(optimisticNotesList);
-                await deleteNote(id);
-                await fetchNotes();
-                setDeletingNoteId(null);
-            }, 300);
+            const data = await getNotes();
+            const notesWithPositions = data.map((note: any, index: number) => ({
+                ...note,
+                position: calculatePosition(index, containerWidth),
+                color:
+                    note.color ||
+                    COLORS[Math.floor(Math.random() * COLORS.length)],
+            }));
+            setNotes(notesWithPositions);
         } catch (error) {
-            console.error("Failed to delete note:", error);
-            await fetchNotes();
-            setDeletingNoteId(null);
+            console.error("Failed to fetch notes:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleCreate = async () => {
-        if (!newNoteText.trim() || isDragging.current) return;
+        if (!newNoteText.trim()) return;
 
+        const position = calculatePosition(notes.length, containerWidth);
+        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const newNote = {
+            id: Date.now(),
+            description: newNoteText,
+            position,
+            color,
+        };
+
+        setNotes((prev) => [...prev, newNote]);
+        setNewNoteText("");
+        setIsCreating(false);
+
+        setIsLoading(true);
         try {
-            const optimisticNote = { id: Date.now(), description: newNoteText };
-            addOptimisticNote(optimisticNote);
             await createNote(newNoteText);
             await fetchNotes();
-            setNewNoteText("");
-            setIsCreating(false);
         } catch (error) {
             console.error("Failed to create note:", error);
-            await fetchNotes();
+            setNotes((prev) => prev.filter((note) => note.id !== newNote.id));
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleUpdate = async (id: number) => {
-        if (isDragging.current) return;
-        const note = notes.find((n) => n.id === id);
-        if (note) {
-            setEditingNote(note);
-        }
-    };
+    const handleUpdate = async () => {
+        if (!activeNote) return;
 
-    const handleSaveEdit = async () => {
-        if (!editingNote) return;
+        const updatedNote = { ...activeNote };
+        setNotes((prev) =>
+            prev.map((note) =>
+                note.id === updatedNote.id ? updatedNote : note,
+            ),
+        );
+        setActiveNote(null);
+
+        setIsLoading(true);
         try {
-            const optimisticNotesList = notes.map((note) =>
-                note.id === editingNote.id ? editingNote : note,
-            );
-            setNotes(optimisticNotesList);
-            await updateNote(editingNote.id, editingNote.description);
-            await fetchNotes();
-            setEditingNote(null);
+            await updateNote(updatedNote.id, updatedNote.description);
         } catch (error) {
             console.error("Failed to update note:", error);
             await fetchNotes();
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleNoteDrop = async (noteId: number, boxId: number) => {
-        if (!isDragging.current) return;
+    const handleDelete = async (id: number) => {
+        const deletedNote = notes.find((note) => note.id === id);
+        setNotes((prev) => prev.filter((note) => note.id !== id));
 
-        const noteToUpdate = notes.find((note) => note.id === noteId);
-        if (!noteToUpdate) return;
-
-        const currentBox = noteId % 4;
-        const idDifference = boxId - currentBox;
-        const newId = noteId + idDifference;
-
+        setIsLoading(true);
         try {
-            const optimisticNotesList = notes.map((note) =>
-                note.id === noteId ? { ...note, id: newId } : note,
-            );
-            setNotes(optimisticNotesList);
-            await updateNote(noteId, noteToUpdate.description);
-            await fetchNotes();
+            await deleteNote(id);
         } catch (error) {
-            console.error("Failed to update note position:", error);
-            await fetchNotes();
+            console.error("Failed to delete note:", error);
+            if (deletedNote) {
+                setNotes((prev) => [...prev, deletedNote]);
+            }
+        } finally {
+            setIsLoading(false);
         }
+    };
+
+    const handleDragStart = () => {
+        setIsDragging(true);
+    };
+
+    const handleDragEnd = (
+        note: Note,
+        newPosition: { x: number; y: number },
+    ) => {
+        setIsDragging(false);
+
+        // Update local position only
+        setNotes((prev) =>
+            prev.map((n) =>
+                n.id === note.id ? { ...n, position: newPosition } : n,
+            ),
+        );
     };
 
     return (
-        <div ref={ref} className="relative h-full w-full">
-            <AnimatePresence>
-                <Background
-                    onCreateClick={() => {
-                        if (!isDragging.current) setIsCreating(true);
-                    }}
-                    notes={optimisticNotes}
-                    reference={ref}
-                    onDragStart={() => {
-                        isDragging.current = true;
-                        setShowDeleteZone(true);
-                    }}
-                    onDragEnd={(info, id) => {
-                        setShowDeleteZone(false);
-                        setIsOverlappingDeleteZone(false);
-                        if (info.point.y > window.innerHeight - 100) {
-                            handleDelete(id);
-                        }
-                        setTimeout(() => {
-                            isDragging.current = false;
-                        }, 100);
-                    }}
-                    onUpdate={handleUpdate}
-                    onNoteDrop={handleNoteDrop}
-                    deletingNoteId={deletingNoteId}
-                    onDeleteZoneOverlap={(isOverlapping) =>
-                        setIsOverlappingDeleteZone(isOverlapping)
-                    }
-                />
+        <div className="bg-grid-pattern relative min-h-screen w-full overflow-hidden p-4">
+            {isLoading && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-sm">
+                    <Loader />
+                </div>
+            )}
 
-                <DeleteZone
-                    show={showDeleteZone}
-                    isOverlapping={isOverlappingDeleteZone}
-                />
+            <button
+                onClick={() => {
+                    setIsCreating(true);
+                    setActionType("create");
+                }}
+                className="bg-primary fixed right-6 bottom-6 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95"
+            >
+                <Plus className="h-6 w-6 text-white" />
+            </button>
 
-                <Modal
-                    title="Create Note"
-                    isOpen={isCreating}
-                    onClose={() => setIsCreating(false)}
-                    onSave={handleCreate}
-                    value={newNoteText}
-                    onChange={setNewNoteText}
-                    saveText="Create"
-                />
+            <div className="relative h-full">
+                <AnimatePresence>
+                    {notes.map((note) => (
+                        <StickyNote
+                            key={note.id}
+                            note={note}
+                            onEdit={() => {
+                                if (!isDragging) {
+                                    setActiveNote(note);
+                                    setActionType("edit");
+                                }
+                            }}
+                            onDelete={() => handleDelete(note.id)}
+                            onDragStart={() => handleDragStart()}
+                            onDragEnd={(position) =>
+                                handleDragEnd(note, position)
+                            }
+                        />
+                    ))}
+                </AnimatePresence>
+            </div>
 
-                <Modal
-                    title="Edit Note"
-                    isOpen={!!editingNote}
-                    onClose={() => setEditingNote(null)}
-                    onSave={handleSaveEdit}
-                    value={editingNote?.description || ""}
-                    onChange={(value) =>
-                        setEditingNote(
-                            editingNote
-                                ? { ...editingNote, description: value }
-                                : null,
-                        )
-                    }
-                />
-            </AnimatePresence>
+            <Modal
+                title={actionType === "create" ? "Create Note" : "Edit Note"}
+                isOpen={isCreating || !!activeNote}
+                onClose={() => {
+                    setIsCreating(false);
+                    setActiveNote(null);
+                    setNewNoteText("");
+                }}
+                onSave={actionType === "create" ? handleCreate : handleUpdate}
+                value={
+                    actionType === "create"
+                        ? newNoteText
+                        : activeNote?.description || ""
+                }
+                onChange={
+                    actionType === "create"
+                        ? setNewNoteText
+                        : (value) =>
+                              setActiveNote(
+                                  activeNote
+                                      ? { ...activeNote, description: value }
+                                      : null,
+                              )
+                }
+                saveText={actionType === "create" ? "Create" : "Save"}
+            />
         </div>
     );
 };

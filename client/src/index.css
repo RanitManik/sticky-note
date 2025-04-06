@@ -1,1 +1,19 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap");
+
+/* Define design tokens using the @theme directive */
+@theme {
+    --color-primary: rgb(253 184 30);
+    --color-primary-foreground: rgb(0 0 0);
+    --font-caveat: "Caveat", cursive;
+    --breakpoint-3xl: 120rem; /* Using rem units for consistency with Tailwind's default breakpoints */
+}
+
+/* Custom utility for grid background pattern */
+.bg-grid-pattern {
+    background-color: #ffffff;
+    background-image:
+        linear-gradient(#e5e7eb 1px, transparent 1px),
+        linear-gradient(to right, #e5e7eb 1px, transparent 1px);
+    background-size: 20px 20px;
+}

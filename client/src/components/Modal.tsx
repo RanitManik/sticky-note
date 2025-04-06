@@ -9,6 +9,7 @@ interface ModalProps {
     value: string;
     onChange: (value: string) => void;
     saveText?: string;
+    loading?: boolean;
 }
 
 const Modal = ({
@@ -19,6 +20,7 @@ const Modal = ({
     value,
     onChange,
     saveText = "Save",
+    loading,
 }: ModalProps) => {
     if (!isOpen) return null;
 
@@ -27,42 +29,49 @@ const Modal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-md rounded-lg bg-[#fdb81e] p-6 shadow"
+                className="w-full max-w-md overflow-hidden rounded-xl bg-[#fff740] shadow-2xl"
             >
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-black">{title}</h2>
+                <div className="relative border-b border-black/10 px-6 py-4">
+                    <h2 className="text-xl font-bold text-black/80">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="cursor-pointer text-black hover:text-gray-700"
+                        className="absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer rounded-full p-1 text-black/60 transition-colors hover:bg-black/10 hover:text-black/80"
                     >
-                        <X className="h-6 w-6" />
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
-                <textarea
-                    autoFocus
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="Write your note..."
-                    className="h-32 w-full resize-none rounded bg-white/90 p-3 text-black focus:outline-none"
-                />
-                <div className="mt-4 flex justify-end gap-2">
+
+                <div className="relative p-6">
+                    <div className="absolute top-0 left-0 h-full w-[3px] bg-black/10" />
+                    <textarea
+                        autoFocus
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="Write your note..."
+                        className="font-caveat h-32 w-full resize-none rounded-lg bg-white/80 p-4 text-lg leading-6 text-black/80 placeholder:text-black/40 focus:bg-white/90 focus:ring-2 focus:ring-black/20 focus:outline-none"
+                    />
+                </div>
+
+                <div className="flex border-t border-black/10">
                     <button
                         onClick={onClose}
-                        className="cursor-pointer rounded bg-gray-200 px-4 py-2 text-black transition-colors hover:bg-gray-300"
+                        className="flex-1 cursor-pointer border-r border-black/10 px-6 py-3 font-semibold text-black/60 transition-colors hover:bg-black/10 hover:text-black/80 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={loading}
                     >
                         Cancel
                     </button>
                     <button
                         onClick={onSave}
-                        className="cursor-pointer rounded bg-black px-4 py-2 text-white transition-colors hover:bg-gray-900"
+                        className="flex-1 cursor-pointer px-6 py-3 font-semibold text-black/80 transition-colors hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={loading}
                     >
-                        {saveText}
+                        {!loading ? saveText : "Loading..."}
                     </button>
                 </div>
             </motion.div>
