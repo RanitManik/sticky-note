@@ -5,6 +5,7 @@ import Modal from "@/components/Modal";
 import StickyNote from "@/components/StickyNote";
 import { Plus } from "lucide-react";
 import Loader from "@/components/Loader";
+import ServerBootNotice from "@/components/ServerBootNotice";
 
 interface Note {
     id: number;
@@ -13,14 +14,41 @@ interface Note {
     color: string;
 }
 
-const COLORS = [
-    "#fff740",
-    "#ff7eb9",
-    "#7afcff",
-    "#98ff98",
-    "#ffd700",
-    "#ff9999",
-];
+// Function to generate color based on first character
+const getColorFromText = (text: string): string => {
+    const colors = {
+        a: "#ff7eb9", // Pink
+        b: "#7afcff", // Cyan
+        c: "#98ff98", // Light green
+        d: "#ffd700", // Gold
+        e: "#ff9999", // Lightc red
+        f: "#fff740", // Yellow
+        g: "#87CEEB", // Sky blue
+        h: "#DDA0DD", // Plum
+        i: "#90EE90", // Light green
+        j: "#FFB6C1", // Light pink
+        k: "#E6E6FA", // Lavender
+        l: "#FFA07A", // Light salmon
+        m: "#98FB98", // Pale green
+        n: "#DEB887", // Burlywood
+        o: "#F0E68C", // Khaki
+        p: "#E0FFFF", // Light cyan
+        q: "#FFDAB9", // Peach puff
+        r: "#B0E0E6", // Powder blue
+        s: "#FFE4E1", // Misty rose
+        t: "#F5DEB3", // Wheat
+        u: "#F0FFF0", // Honeydew
+        v: "#F5F5DC", // Beige
+        w: "#FFF0F5", // Lavender blush
+        x: "#F0FFFF", // Azure
+        y: "#FFFACD", // Lemon chiffon
+        z: "#F5F5F5", // White smoke
+    };
+
+    const firstChar = text.trim().toLowerCase().charAt(0);
+    return colors[firstChar as keyof typeof colors] || "#fff740"; // Default to yellow if no match
+};
+
 const NOTE_WIDTH = 200;
 const NOTE_HEIGHT = 200;
 const GRID_GAP = 20;
@@ -42,6 +70,7 @@ const StickyBoard = () => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showServerNotice, setShowServerNotice] = useState(false);
     const [activeNote, setActiveNote] = useState<Note | null>(null);
     const [newNoteText, setNewNoteText] = useState("");
     const [actionType, setActionType] = useState<"create" | "edit" | null>(
@@ -61,11 +90,19 @@ const StickyBoard = () => {
 
     useEffect(() => {
         fetchNotes();
+
+        // Show server notice after 10 seconds of loading
+        const timer = setTimeout(() => {
+            if (isLoading) {
+                setShowServerNotice(true);
+            }
+        }, 10000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
         if (!isDragging) {
-            // Only recalculate positions when not dragging
             const updatedNotes = notes.map((note, index) => ({
                 ...note,
                 position: calculatePosition(index, containerWidth),
@@ -81,15 +118,14 @@ const StickyBoard = () => {
             const notesWithPositions = data.map((note: any, index: number) => ({
                 ...note,
                 position: calculatePosition(index, containerWidth),
-                color:
-                    note.color ||
-                    COLORS[Math.floor(Math.random() * COLORS.length)],
+                color: getColorFromText(note.description),
             }));
             setNotes(notesWithPositions);
         } catch (error) {
             console.error("Failed to fetch notes:", error);
         } finally {
             setIsLoading(false);
+            setShowServerNotice(false);
         }
     };
 
@@ -97,7 +133,7 @@ const StickyBoard = () => {
         if (!newNoteText.trim()) return;
 
         const position = calculatePosition(notes.length, containerWidth);
-        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const color = getColorFromText(newNoteText);
         const newNote = {
             id: Date.now(),
             description: newNoteText,
@@ -124,7 +160,11 @@ const StickyBoard = () => {
     const handleUpdate = async () => {
         if (!activeNote) return;
 
-        const updatedNote = { ...activeNote };
+        const updatedNote = {
+            ...activeNote,
+            color: getColorFromText(activeNote.description),
+        };
+
         setNotes((prev) =>
             prev.map((note) =>
                 note.id === updatedNote.id ? updatedNote : note,
@@ -169,8 +209,6 @@ const StickyBoard = () => {
         newPosition: { x: number; y: number },
     ) => {
         setIsDragging(false);
-
-        // Update local position only
         setNotes((prev) =>
             prev.map((n) =>
                 n.id === note.id ? { ...n, position: newPosition } : n,
@@ -178,10 +216,14 @@ const StickyBoard = () => {
         );
     };
 
+    if (showServerNotice) {
+        return <ServerBootNotice />;
+    }
+
     return (
         <div className="bg-grid-pattern relative min-h-screen w-full overflow-hidden p-4">
-            {isLoading && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-sm">
+            {isLoading && !showServerNotice && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
                     <Loader />
                 </div>
             )}
@@ -193,7 +235,7 @@ const StickyBoard = () => {
                 }}
                 className="bg-primary fixed right-6 bottom-6 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95"
             >
-                <Plus className="h-6 w-6 text-white" />
+                <Plus className="h-6 w-6 text-black" />
             </button>
 
             <div className="relative h-full">
