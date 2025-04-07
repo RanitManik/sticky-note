@@ -88,17 +88,9 @@ const StickyBoard = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    // fetch the data on page load
     useEffect(() => {
         fetchNotes();
-
-        // Show server notice after 10 seconds of loading
-        const timer = setTimeout(() => {
-            if (isLoading) {
-                setShowServerNotice(true);
-            }
-        }, 10000);
-
-        return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
@@ -113,17 +105,26 @@ const StickyBoard = () => {
 
     const fetchNotes = async () => {
         setIsLoading(true);
+        let timeoutId;
+
         try {
+            timeoutId = setTimeout(() => {
+                setShowServerNotice(true);
+            }, 10000);
+
             const data = await getNotes();
+
             const notesWithPositions = data.map((note: any, index: number) => ({
                 ...note,
                 position: calculatePosition(index, containerWidth),
                 color: getColorFromText(note.description),
             }));
+
             setNotes(notesWithPositions);
         } catch (error) {
             console.error("Failed to fetch notes:", error);
         } finally {
+            clearTimeout(timeoutId);
             setIsLoading(false);
             setShowServerNotice(false);
         }
