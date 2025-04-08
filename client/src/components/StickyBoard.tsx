@@ -110,7 +110,7 @@ const StickyBoard = () => {
         try {
             timeoutId = setTimeout(() => {
                 setShowServerNotice(true);
-            }, 5000);
+            }, 7000);
 
             const data = await getNotes();
 
